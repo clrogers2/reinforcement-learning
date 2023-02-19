@@ -69,12 +69,11 @@ class EpsilonDecay(object):
         self._decay_rate = 0.01
         self.decay_rate = decay_rate
         self.n = 0
-            
 
     def __call__(self, x):
         self.n += 1
         return self.decay(eps=x, n=self.n)
-    
+
     @property
     def eps_min(self) -> float:
         """
@@ -84,7 +83,7 @@ class EpsilonDecay(object):
             float: Minimum epsilon
         """
         return self._eps_min
-    
+
     @eps_min.setter
     def eps_min(self, x):
         if 1 > x >= 0:
@@ -105,7 +104,7 @@ class EpsilonDecay(object):
             float: the decay rate for this decay strategy
         """
         return self._decay_rate
-    
+
     @decay_rate.setter
     def decay_rate(self, x):
         if 1 > x > 0:
@@ -135,6 +134,7 @@ class LinearDecay(EpsilonDecay):
     """Decay epsilon linearly"""
 
     def __init__(self, *args, **kwargs):
+        # TODO write documentation explaining how the linear decay works
         super().__init__(*args, **kwargs)
 
     def decay(self, eps: float, n: int) -> float:
@@ -145,6 +145,7 @@ class ExponentialDecay(EpsilonDecay):
     """Decay epsilon exponentially"""
 
     def __init__(self, *args, **kwargs):
+        # TODO write documentation explaining how the exponential decay works
         super().__init__(*args, **kwargs)
 
     def decay(self, eps: float, n: int) -> float:
@@ -155,6 +156,7 @@ class InverseSqrtDecay(EpsilonDecay):
     """Decay epsilon using the inverse square root of n (the current number of steps)"""
 
     def __init__(self, *args, **kwargs):
+        # TODO write documentation explaining how the inverse square root decay works
         super().__init__(*args, **kwargs)
 
     def decay(self, eps: float, n: int) -> float:
@@ -162,57 +164,30 @@ class InverseSqrtDecay(EpsilonDecay):
 
 
 class AdaptiveDecay(EpsilonDecay):
-    def __init__(self, *args, eps_max: float = 0.10, **kwargs):
+    """Change epsilon based on it's current performance"""
+
+    def __init__(self, *args, **kwargs):
+        """
+        While I understand the theory behind adaptive decay, and know about "real-world" implementations like Adagrad, 
+        AdaDelta, RMSProp and Adam; it is the decay strategy I understand the least. This implementation is my very 
+        naive attempt to implement something that takes into account the performance of epsilon. However, I really lack 
+        an understanding and intuition of the details of the implementation.
+        """
         super().__init__(*args, **kwargs)
-        self._eps_max = 0.9999
-        self.eps_max = eps_max
-        self.eps_min = self.eps_min  # Check the min now that we have a max
 
-    @property
-    def eps_min(self) -> float:
+    def decay(self, eps: float, perf: float, **kwargs):
         """
-        The minimum value to which epsilon might be reduced. Must be a value greater than or equal to 0 but less than 
-        eps_max (the maximum value epsilon might be raised).
+        Decay using some performance metric
+
+        Args:
+            eps (float): The current epsilon value
+            perf (float): The current performance of epsilon
 
         Returns:
-            float: Minimum epsilon
+            float: the adjusted epsilon
         """
-        return self._eps_min
-    
-    @eps_min.setter
-    def eps_min(self, x):
-        if self._eps_max > x >= 0:
-            self._eps_min = x
-        else:
-            raise ValueError("eps_min must be less than eps_max and greater than or equal to 0")
-
-    @eps_min.deleter
-    def eps_min(self):
-        self._eps_min = 0.001
-
-    @property
-    def eps_max(self) -> float:
-        """
-        The maximum value to which epsilon might rise if using 
-
-        Returns:
-            _type_: _description_
-        """
-        return self._eps_max
-    
-    @eps_max.setter
-    def eps_max(self, x):
-        if 1 > x > self._eps_min:
-            self._eps_max = x
-        else:
-            raise ValueError("eps_max must be less than 1 and greater than eps_min.")
-    
-    @eps_max.deleter
-    def eps_max(self):
-        self._eps_max = 0.10
-
-    def decay(self, eps: float):
-        return max(self.eps_min, self.eps_max / (1 + self.decay_rate * eps))
+        # TODO return and fix implementation once I better understand adaptive decay
+        return max(self.eps_min, eps / (1 + self.decay_rate * perf))
 
 
 class MultiArmBandit(object):
@@ -305,8 +280,8 @@ class MultiArmBandit(object):
 
 
 class EpsilonGreedy(MultiArmBandit):
-    """
-    MultiArmBandit with the Epsilon-greedy algorithm"""
+    """MultiArmBandit with the Epsilon-greedy algorithm"""
+
     def __init__(self, *args, eps: float = 0.1, **kwargs):
         """
         A Multi-arm Bandit simulation with epsilon-greedy algorithm. Epsilon controls the probability that an explore
