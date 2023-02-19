@@ -158,7 +158,7 @@ class InverseSqrtDecay(EpsilonDecay):
         super().__init__(*args, **kwargs)
 
     def decay(self, eps: float, n: int) -> float:
-        return max(eps / ((n + 1) ** 0.5)), self.eps_min)
+        return max(eps / ((n + 1) ** 0.5), self.eps_min)
 
 
 class AdaptiveDecay(EpsilonDecay):
