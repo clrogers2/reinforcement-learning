@@ -44,6 +44,177 @@ class Bandit(object):
         self.p_estimate += (x / self.n_trials)
 
 
+class EpsilonDecay(object):
+    """
+    A generic decay strategy for decreasing the value of epsilon over time
+    """
+
+    def __init__(self, name: str, eps_min: float = 0.001, decay_rate: float = 0.01):
+        """
+        A generic class for implementing a decay strategy for epsilon. Implementing a class with inheritance is 
+        definitly overkill for code geared toward learning. But after being issued the challenge to implement decay, I 
+        got thinking about how I would keep my code consistent and meet some of the demands of production use, so I 
+        allowed myself an hour or two to try a more robust implementation.
+
+        Args:
+            name (str): Name of the decay strategy
+            eps_min (float, optional): The lower limit to which epsilon might decay. Defaults to 0.001.
+            decay_rate (float, optional): The rate of decay. Defaults to 0.01.
+        """
+        self.name = name
+        # Need to verify epsilon min and max values so we set placeholder values then use the property to assign
+        self._eps_min = 0
+        self.eps_min = eps_min
+        # need to verify decay rate so we set a placeholder value then use the property to verify and assign
+        self._decay_rate = 0.01
+        self.decay_rate = decay_rate
+        self.n = 0
+            
+
+    def __call__(self, x):
+        self.n += 1
+        return self.decay(eps=x, n=self.n)
+    
+    @property
+    def eps_min(self) -> float:
+        """
+        The minimum value to which epsilon might be reduced. Must be a value greater than or equal to 0 but less than 1.
+
+        Returns:
+            float: Minimum epsilon
+        """
+        return self._eps_min
+    
+    @eps_min.setter
+    def eps_min(self, x):
+        if 1 > x >= 0:
+            self._eps_min = x
+        else:
+            raise ValueError("eps_min must be less than 1 and greater than or equal to 0")
+
+    @eps_min.deleter
+    def eps_min(self):
+        self._eps_min = 0.001
+
+    @property
+    def decay_rate(self) -> float:
+        """
+        The rate at which epsilon would decay. Must be less than 1 and greater than 0.
+
+        Returns:
+            float: the decay rate for this decay strategy
+        """
+        return self._decay_rate
+    
+    @decay_rate.setter
+    def decay_rate(self, x):
+        if 1 > x > 0:
+            self._decay_rate = x
+        else:
+            raise ValueError("Decay rate must be less than 1 and greater than 0")
+
+    @decay_rate.deleter
+    def decay_rate(self):
+        self._decay_rate = 0.01
+
+    def decay(self, eps: float, n: int | None) -> float:
+        """
+        Implement a constant epsilon
+
+        Args:
+            eps (float): The current epsilon value
+            n (int): The current number of steps in the decay process. Not always used
+
+        Returns:
+            float: return the epsilon value
+        """
+        return eps
+
+
+class LinearDecay(EpsilonDecay):
+    """Decay epsilon linearly"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def decay(self, eps: float, n: int) -> float:
+        return max(eps - (eps - self.eps_min) * (n / self.decay_rate), self.eps_min)
+
+
+class ExponentialDecay(EpsilonDecay):
+    """Decay epsilon exponentially"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def decay(self, eps: float, n: int) -> float:
+        return self.eps_min + (eps - self.eps_min) * ((-self.decay_rate * n) ** 2)
+
+
+class InverseSqrtDecay(EpsilonDecay):
+    """Decay epsilon using the inverse square root of n (the current number of steps)"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def decay(self, eps: float, n: int) -> float:
+        return max(eps / ((n + 1) ** 0.5)), self.eps_min)
+
+
+class AdaptiveDecay(EpsilonDecay):
+    def __init__(self, *args, eps_max: float = 0.10, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._eps_max = 0.9999
+        self.eps_max = eps_max
+        self.eps_min = self.eps_min  # Check the min now that we have a max
+
+    @property
+    def eps_min(self) -> float:
+        """
+        The minimum value to which epsilon might be reduced. Must be a value greater than or equal to 0 but less than 
+        eps_max (the maximum value epsilon might be raised).
+
+        Returns:
+            float: Minimum epsilon
+        """
+        return self._eps_min
+    
+    @eps_min.setter
+    def eps_min(self, x):
+        if self._eps_max > x >= 0:
+            self._eps_min = x
+        else:
+            raise ValueError("eps_min must be less than eps_max and greater than or equal to 0")
+
+    @eps_min.deleter
+    def eps_min(self):
+        self._eps_min = 0.001
+
+    @property
+    def eps_max(self) -> float:
+        """
+        The maximum value to which epsilon might rise if using 
+
+        Returns:
+            _type_: _description_
+        """
+        return self._eps_max
+    
+    @eps_max.setter
+    def eps_max(self, x):
+        if 1 > x > self._eps_min:
+            self._eps_max = x
+        else:
+            raise ValueError("eps_max must be less than 1 and greater than eps_min.")
+    
+    @eps_max.deleter
+    def eps_max(self):
+        self._eps_max = 0.10
+
+    def decay(self, eps: float):
+        return max(self.eps_min, self.eps_max / (1 + self.decay_rate * eps))
+
+
 class MultiArmBandit(object):
     """
     Generic Multi-arm Bandit class to be inherited by the specific algorithmic implementation.
