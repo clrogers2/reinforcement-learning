@@ -49,7 +49,7 @@ class EpsilonDecay(object):
     A generic decay strategy for decreasing the value of epsilon over time
     """
 
-    def __init__(self, name: str, eps_min: float = 0.001, decay_rate: float = 0.01):
+    def __init__(self, name: str = "constant", eps_min: float = 0.001, decay_rate: float = 0.01):
         """
         A generic class for implementing a decay strategy for epsilon. Implementing a class with inheritance is 
         definitly overkill for code geared toward learning. But after being issued the challenge to implement decay, I 
@@ -127,6 +127,7 @@ class EpsilonDecay(object):
         Returns:
             float: return the epsilon value
         """
+        n
         return eps
 
 
@@ -135,7 +136,7 @@ class LinearDecay(EpsilonDecay):
 
     def __init__(self, *args, **kwargs):
         # TODO write documentation explaining how the linear decay works
-        super().__init__(*args, **kwargs)
+        super().__init__(name='linear', *args, **kwargs)
 
     def decay(self, eps: float, n: int) -> float:
         return max(eps - (eps - self.eps_min) * (n / self.decay_rate), self.eps_min)
@@ -146,7 +147,7 @@ class ExponentialDecay(EpsilonDecay):
 
     def __init__(self, *args, **kwargs):
         # TODO write documentation explaining how the exponential decay works
-        super().__init__(*args, **kwargs)
+        super().__init__(name='exponential', *args, **kwargs)
 
     def decay(self, eps: float, n: int) -> float:
         return self.eps_min + (eps - self.eps_min) * ((-self.decay_rate * n) ** 2)
@@ -157,7 +158,7 @@ class InverseSqrtDecay(EpsilonDecay):
 
     def __init__(self, *args, **kwargs):
         # TODO write documentation explaining how the inverse square root decay works
-        super().__init__(*args, **kwargs)
+        super().__init__(name='inverse_sqrt', *args, **kwargs)
 
     def decay(self, eps: float, n: int) -> float:
         return max(eps / ((n + 1) ** 0.5), self.eps_min)
@@ -173,7 +174,7 @@ class AdaptiveDecay(EpsilonDecay):
         naive attempt to implement something that takes into account the performance of epsilon. However, I really lack 
         an understanding and intuition of the details of the implementation.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(name='adaptive', *args, **kwargs)
 
     def decay(self, eps: float, perf: float, **kwargs):
         """
