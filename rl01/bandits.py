@@ -127,7 +127,6 @@ class EpsilonDecay(object):
         Returns:
             float: return the epsilon value
         """
-        n
         return eps
 
 
