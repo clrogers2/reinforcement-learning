@@ -246,7 +246,7 @@ class MultiArmBandit(object):
         self.num_optimal = 0
         self.seed = seed
         np.random.seed(self.seed)
-        self.optimal_j = np.argmax([b.p for b in self.bandits])
+        self.optimal_j = np.argmax([b.p_true for b in self.bandits])
 
     def algorithm(self) -> int:
         """
