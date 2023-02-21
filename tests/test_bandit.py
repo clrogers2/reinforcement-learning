@@ -10,10 +10,14 @@ def get_bandit():
 
 
 def test_bandit_pull_values(get_bandit):
+    """Make sure the output of bandit is a bool value"""
     assert get_bandit.pull() in (True, False)
 
 
 def test_bandit_pull_dist(get_bandit):
+    """
+    Make sure the bandit pull method works and the distribution generated is the one expected
+    """
     results = []
     for _ in range(0, 100):
         results.append(get_bandit.pull())
@@ -22,6 +26,9 @@ def test_bandit_pull_dist(get_bandit):
 
 
 def test_epsilon_constant():
+    """Test the constant epsilon using the base decay class. Could implement a parameterized test that tests each 
+    form of decay, however, in the future I may choose to test each form of decay more exactly. 
+    """
     e_decay = EpsilonDecay(eps_min=0.05, decay_rate=0.01)
     eps = 0.10
     for i in range(1,6):
@@ -32,6 +39,7 @@ def test_epsilon_constant():
 
 
 def test_linear_decay():
+    """Test linear decay"""
     l_decay = LinearDecay(eps_min=0.05, decay_rate=0.01)
     eps = 0.10
     all_eps = [eps,]
@@ -43,6 +51,7 @@ def test_linear_decay():
 
 
 def test_exp_decay():
+    """Test exponential decay"""
     exp_decay = ExponentialDecay(eps_min=0.05, decay_rate=0.01)
     eps = 0.10
     for i in range(1, 6):
@@ -53,6 +62,7 @@ def test_exp_decay():
 
 
 def test_inverse_sqr_decay():
+    """Test the inverse square root decay"""
     is_decay = InverseSqrtDecay(eps_min=0.05, decay_rate=0.01)
     eps = 0.10
     for i in range(1, 6):
@@ -64,4 +74,5 @@ def test_inverse_sqr_decay():
 
 @pytest.mark.skip
 def test_adaptive_deacy():
+    """Since I don't have a handle on this yet, I skip for now"""
     pass

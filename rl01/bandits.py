@@ -1,5 +1,5 @@
 """Bandits and Multi-arm Bandits"""
-from typing import List
+from typing import List, Union
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -134,18 +134,33 @@ class LinearDecay(EpsilonDecay):
     """Decay epsilon linearly"""
 
     def __init__(self, *args, **kwargs):
-        # TODO write documentation explaining how the linear decay works
+        """
+        Epsilon will decay by the product of the difference between the current epsilon and the minimum epsilon value 
+        and the current step divided by the decay rate. In otherwords, how much distance we have left to go to reach the
+        minimum, times the decay per step
+
+        Args:
+            eps_min (float, optional): The lower limit to which epsilon might decay. Defaults to 0.001.
+            decay_rate (float, optional): The rate of decay a value between 0 and 1. Defaults to 0.01.
+        """
         super().__init__(name='linear', *args, **kwargs)
 
     def decay(self, eps: float, n: int) -> float:
-        return max(eps - (eps - self.eps_min) * (n / self.decay_rate), self.eps_min)
+        return max(eps - (eps - self.eps_min) * (n * self.decay_rate), self.eps_min)
 
 
 class ExponentialDecay(EpsilonDecay):
     """Decay epsilon exponentially"""
 
     def __init__(self, *args, **kwargs):
-        # TODO write documentation explaining how the exponential decay works
+        """
+        Epsilon will decay by the product of the difference between the current epsilon and the minimum epsilon value 
+        and the negative decay rate for the given step squared.
+
+        Args:
+            eps_min (float, optional): The lower limit to which epsilon might decay. Defaults to 0.001.
+            decay_rate (float, optional): The rate of decay a value between 0 and 1. Defaults to 0.01.
+        """
         super().__init__(name='exponential', *args, **kwargs)
 
     def decay(self, eps: float, n: int) -> float:
@@ -156,7 +171,13 @@ class InverseSqrtDecay(EpsilonDecay):
     """Decay epsilon using the inverse square root of n (the current number of steps)"""
 
     def __init__(self, *args, **kwargs):
-        # TODO write documentation explaining how the inverse square root decay works
+        """
+        Epsilon will decay by dividing by the square root of the number of steps plus 1.
+       
+        Args:
+            eps_min (float, optional): The lower limit to which epsilon might decay. Defaults to 0.001.
+            decay_rate (float, optional): The rate of decay a value between 0 and 1. Defaults to 0.01.
+        """
         super().__init__(name='inverse_sqrt', *args, **kwargs)
 
     def decay(self, eps: float, n: int) -> float:
@@ -282,7 +303,7 @@ class MultiArmBandit(object):
 class EpsilonGreedy(MultiArmBandit):
     """MultiArmBandit with the Epsilon-greedy algorithm"""
 
-    def __init__(self, *args, eps: float = 0.1, **kwargs):
+    def __init__(self, *args, eps: float = 0.1, decay: Union[str, EpsilonDecay] = "constant", **kwargs):
         """
         A Multi-arm Bandit simulation with epsilon-greedy algorithm. Epsilon controls the probability that an explore
         action is randomly taken instead of a greedy action. In this implementation, explore could make a greedy choice.
@@ -292,7 +313,13 @@ class EpsilonGreedy(MultiArmBandit):
         """
         super().__init__(*args, **kwargs)
         self.eps = eps
-
+        decay_strats = {"constant": EpsilonDecay, "linear": LinearDecay, "exponential": ExponentialDecay, 
+                        "inverse_sqrt": InverseSqrtDecay}
+        if decay.lower() in decay_strats:
+            self.decay = decay_strats[decay.lower()]()
+        else:
+            print(f"'{decay}' Decay strategy not know. Defaulting to Constant")
+            self.decay = decay_strats["constant"]()
 
     def algorithm(self) -> int:
         """
@@ -308,5 +335,7 @@ class EpsilonGreedy(MultiArmBandit):
         else:
             self.nexploited += 1
             i = np.argmax([b.p_estimate for b in self.bandits])  # pick a bandit with the current MLE
+        # Decay epsilon according to the choosen deay strategy
+        self.eps = self.decay(self.eps)
 
         return i
