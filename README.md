@@ -31,3 +31,8 @@ I enjoy writing robust, well documented and tested code that is reproduceable an
     2. Pyenv Version file
     3. Poetry Files
     4. Readme
+
+# Caveats
+Since my objective is to reinforce my understanding of these algorithms and techniques, you are going to find problems and issues in my code. This will be especially true if you take the time to review the git commit history. These are on full display for my own benefit as I work through issues, identify fixes, improve my understanding, etc. I'm a realist and believe the only way I can plot a path to future success is to know where I've been and where I currently am. If you are reading this then I hope you will view this display of my past/current weakness as a demonstration of my genuine desire to grow and improve, my honesty and humility, and as a demonstration of my problem solving abilities.
+
+Thanks again for checking out my work!
