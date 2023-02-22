@@ -18,11 +18,27 @@ class EpsilonDecay(object):
         got thinking about how I would keep my code consistent and meet some of the demands of production use, so I 
         allowed myself an hour or two to try a more robust implementation.
 
+        This base class implements a constant epsilon. To get actual decay, utilize a specific subclass. Once 
+        instantiated, call the class with the current estimated epsilon value. Used in this way the class keeps track
+        of the number of times the decay has occurred.
+
+        const_decay = EpsilonDecay(eps_min=0.01, decay_rate=0.001)
+        new_eps = const_decay(cur_eps)
+
+        
+        Alternatively you can keep track of 'n' manually and use the decay() method directly (used internally when 
+        calling the class as shown above.)
+
+        const_decay.n += 1
+        new_eps = const_decay.decay(eps=cur_eps, n=const_decay.n)
+
+        
         Args:
             name (str): Name of the decay strategy
             eps_min (float, optional): The lower limit to which epsilon might decay. Defaults to 0.001.
             decay_rate (float, optional): The rate of decay. Defaults to 0.01.
         """
+        
         self.name = name
         # Need to verify epsilon min and max values so we set placeholder values then use the property to assign
         self._eps_min = 0.01
@@ -32,7 +48,7 @@ class EpsilonDecay(object):
         self.decay_rate = decay_rate
         self.n = 0
 
-    def __call__(self, x):
+    def __call__(self, x: float = None):
         self.n += 1
         return self.decay(eps=x, n=self.n)
 
