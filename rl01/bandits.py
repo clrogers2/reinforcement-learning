@@ -38,7 +38,7 @@ class EpsilonDecay(object):
             eps_min (float, optional): The lower limit to which epsilon might decay. Defaults to 0.001.
             decay_rate (float, optional): The rate of decay. Defaults to 0.01.
         """
-        
+
         self.name = name
         # Need to verify epsilon min and max values so we set placeholder values then use the property to assign
         self._eps_min = 0.01
@@ -226,7 +226,7 @@ class Bandit(object):
             integer of value 0 for False and 1 for True
         """
         self.n_trials += 1
-        self.p_estimate += ((self.n_trials - 1) * self.p_estimate + x) / self.n_trials
+        self.p_estimate = ((self.n_trials - 1) * self.p_estimate + x) / self.n_trials
 
 
 class MultiArmBandit(object):
