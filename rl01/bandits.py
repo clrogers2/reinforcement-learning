@@ -249,6 +249,8 @@ class MultiArmBandit(object):
             nbandits (int): Total number of bandits (arms) to use in the simulation
             probs (list | None): The theoretical probability distribution of each bandit
             ntrials (int): Total number of simulated steps to run
+            dist (Callable, optional): The probability distribution to use when determining rewards. 
+                Defaults to np.random.random.
             seed (int, optional): Set the random seed for reproduceability. Defaults to 123.
         """
 
@@ -262,12 +264,12 @@ class MultiArmBandit(object):
             probs = self.dist((1, self.n_bandits)).tolist()
         self.bandit_probs: List[float] = probs
         self.n_trials = ntrials
-        self.bandits = [bandit for bandit in map(Bandit, self.bandit_probs)]
+        self.bandits: List[Bandit] = list(map(Bandit, self.bandit_probs))
         self.rewards = np.zeros(self.n_trials)
         self.n_explored = 0
         self.n_exploited = 0
         self.num_optimal = 0
-        self.optimal_j = np.argmax([b.p_true for b in self.bandits])
+        self.optimal_bandit = np.argmax([b.p_true for b in self.bandits])
 
     def algorithm(self) -> int:
         """
@@ -285,7 +287,7 @@ class MultiArmBandit(object):
             #  Run the algorithm
             j = self.algorithm()
             # Since this is a simulation, we can keep track of how often the algorithm choose the optimal solution
-            if j == self.optimal_j:
+            if j == self.optimal_bandit:
                 # Record the number of times we select the Optimal bandit
                 self.num_optimal += 1
 
@@ -301,8 +303,16 @@ class MultiArmBandit(object):
         Since we are only simulating data, we can keep track of the metrics in order to showcase the performance of 
         each algorithm implementation
         """
-        est = [f"{i+1}: {b.p_estimate}" for i,b in enumerate(self.bandits)]
-        p_true = [f"{i+1}: {b.p_true}" for i,b in enumerate(self.bandits)]
+        est = []
+        p_true = []
+        n_select = []
+        # Iterate through the bandits and format data for output
+        for i, b in enumerate(self.bandits):
+
+            est.append(f"{i+1}: {b.p_estimate}")
+            p_true.append(f"{i+1}: {b.p_true}")
+            n_select.append(f"{i+1}: {b.n_trials}")
+
         rewards = self.rewards.sum()
         win_rate = rewards / self.n_trials
 
@@ -313,6 +323,7 @@ class MultiArmBandit(object):
         print(f"Times Explored: {self.n_explored}")
         print(f"Times Exploited: {self.n_exploited}")
         print(f"Times Selected Optimal Bandit: {self.num_optimal}")
+        print(f"Times Selected Each Bandit: {n_select}")
 
     def plot_results(self, log_scale: bool = False):
         """
@@ -369,3 +380,44 @@ class EpsilonGreedy(MultiArmBandit):
         self.eps = self.decay(self.eps)
 
         return i
+
+
+class OptimisticInitialValues(MultiArmBandit):
+    """Multi-arm Bandit with the Optimistic Initial values algorithm"""
+
+    def __init__(self, nbandits: int, initial_mean: float, probs: list | None, ntrials: int,
+                 dist: Callable = np.random.random, seed: int = 123):
+        """
+        Optimistic Initial Values is an algorithm that starts by over estimating the mean initially, and then selecting
+        the bandit with the current highest mean. In this way, the algorithm lowers the probability estimate iteratively
+        until the current bandit's probability estimate falls below that of another bandit. The algorithm switches to 
+        the new current highest mean estimate bandit and continues the process until discovering the bandit with the 
+        highest true probability.
+
+        Args:
+            nbandits (int): Total number of bandits (arms) to use in the simulation
+            initial_mean (float): The higher the value the greater the exploration
+            probs (list | None): The theoretical probability distribution of each bandit
+            ntrials (int): Total number of simulated steps to run
+            dist (Callable, optional): The probability distribution to use when determining rewards. 
+                Defaults to np.random.random.
+            seed (int, optional): Set the random seed for reproduceability. Defaults to 123.
+        """
+        super().__init__(nbandits=nbandits, probs=probs, ntrials=ntrials, dist=dist, seed=seed)
+        self.initial_mean = initial_mean
+        # We need to modify how the initial values of the Bandits to start with a high estimated mean
+        # And set the starting number to 1 so that p_estimate doesn't get overwritten to zero on first iteration
+        for bandit in self.bandits:
+            bandit.p_estimate = initial_mean + self.dist()
+            bandit.n_trials = 1
+        self.current_bandit = np.argmax([b.p_estimate for b in self.bandits])
+        
+    def algorithm(self) -> int:
+        i_largest_mean = np.argmax([b.p_estimate for b in self.bandits])
+        if i_largest_mean == self.current_bandit:
+            self.n_exploited += 1
+        else:
+            self.n_explored += 1
+        
+        self.current_bandit = i_largest_mean
+        return i_largest_mean
