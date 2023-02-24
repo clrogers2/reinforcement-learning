@@ -325,19 +325,24 @@ class MultiArmBandit(object):
         print(f"Times Selected Optimal Bandit: {self.num_optimal}")
         print(f"Times Selected Each Bandit: {n_select}")
 
-    def plot_results(self, log_scale: bool = False):
+    def plot_results(self, log_scale: bool = False, y_max: int | None = None):
         """
         Plot the cumulative reward for the simulation against the maximum probable likelihood
 
         Args:
             log_scale (bool): Display the xaxis in log scale. Defaults to False
+            y_max (int): Max height of the y-axis. Defaults to 1
         """
+
         cumulative_rewards = np.cumsum(self.rewards)
         win_rates = cumulative_rewards / (np.arange(self.n_trials) + 1)
+        if y_max:
+            plt.ylim([0, y_max])
         plt.plot(win_rates)
         plt.plot(np.ones(self.n_trials)*np.max(self.bandit_probs))
         if log_scale:
             plt.xscale('log')
+
         plt.show()
 
 
