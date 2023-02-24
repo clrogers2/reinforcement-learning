@@ -416,13 +416,14 @@ class OptimisticInitialValues(MultiArmBandit):
             bandit.p_estimate = initial_mean + self.dist()
             bandit.n_trials = 1
         self.current_bandit = np.argmax([b.p_estimate for b in self.bandits])
-        
+        # TODO something isn't right about the plot, I expect the plot of rewards to descend
+
     def algorithm(self) -> int:
         i_largest_mean = np.argmax([b.p_estimate for b in self.bandits])
         if i_largest_mean == self.current_bandit:
             self.n_exploited += 1
         else:
             self.n_explored += 1
-        
+
         self.current_bandit = i_largest_mean
         return i_largest_mean
