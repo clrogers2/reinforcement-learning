@@ -1,6 +1,6 @@
 """Bandits and Multi-arm Bandits"""
 import math
-from typing import List, Union
+from typing import Callable, List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -194,7 +194,7 @@ class Bandit(object):
     A simulated Bandit
     """
 
-    def __init__(self, p_true: float):
+    def __init__(self, p_true: float, dist: Callable = np.random.random):
         """
         Hold the true and estimated probability (p) for a simulated bandit
 
@@ -202,6 +202,7 @@ class Bandit(object):
             p_true (float): The true probability for this simulated bandit between 0 and 1.
         """
 
+        self.dist = dist
         self.p_true = p_true
         self.p_estimate = 0.
         # Number of times this bandit was chosen. Needed to update the online probability (mean) using the previous mean
@@ -215,7 +216,7 @@ class Bandit(object):
         Returns:
             bool: The win or loss
         """
-        return np.random.random() < self.p_true
+        return self.dist() < self.p_true
 
     def update(self, x: bool) -> None:
         """
@@ -235,7 +236,8 @@ class MultiArmBandit(object):
     """
     bandits: list = []
 
-    def __init__(self, nbandits: int, probs: list | None, ntrials: int, seed: int = 123):
+    def __init__(self, nbandits: int, probs: list | None, ntrials: int, dist: Callable = np.random.random, 
+                 seed: int = 123):
         """
         Implement the basic framework needed to run a multi-arm bandit simulation. This class lacks the implementation
         of a specific algorithm and should be the super class of algorithm-specific implementations. I chose the 
@@ -250,11 +252,14 @@ class MultiArmBandit(object):
             seed (int, optional): Set the random seed for reproduceability. Defaults to 123.
         """
 
+        self.seed = seed
+        np.random.seed(self.seed)
         self.MAB = MultiArmBandit  # Shortcut the class
         self.n_bandits = nbandits
         self.i_bandits = list(range(self.n_bandits))
+        self.dist = dist
         if not probs:
-            probs = np.random.random((1, self.n_bandits)).tolist()
+            probs = self.dist((1, self.n_bandits)).tolist()
         self.bandit_probs: List[float] = probs
         self.n_trials = ntrials
         self.bandits = [bandit for bandit in map(Bandit, self.bandit_probs)]
@@ -262,8 +267,6 @@ class MultiArmBandit(object):
         self.n_explored = 0
         self.n_exploited = 0
         self.num_optimal = 0
-        self.seed = seed
-        np.random.seed(self.seed)
         self.optimal_j = np.argmax([b.p_true for b in self.bandits])
 
     def algorithm(self) -> int:
@@ -351,7 +354,7 @@ class EpsilonGreedy(MultiArmBandit):
             int: The position in the list of the bandit chosen for this pull
         """
         # Epsilon-greedy, explore if we generate a number lower than the value of epsilon
-        if np.random.random() < self.eps:
+        if self.dist() < self.eps:
             self.n_explored += 1
             i = np.random.choice(self.i_bandits)  # pick a random bandit
         else:
