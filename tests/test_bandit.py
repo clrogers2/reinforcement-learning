@@ -1,7 +1,12 @@
-import pytest
 import math
+
+import numpy as np
+import pytest
 from scipy.stats import binomtest
-from rl01.bandits import Bandit, EpsilonDecay, LinearDecay, ExponentialDecay, InverseSqrtDecay
+
+from rl01.bandits import (Bandit, EpsilonDecay, ExponentialDecay,
+                          InverseSqrtDecay, LinearDecay,
+                          OptimisticInitialValues, UpperConfidenceBound1)
 
 
 @pytest.fixture(scope="module")
@@ -76,3 +81,17 @@ def test_inverse_sqr_decay():
 def test_adaptive_deacy():
     """Since I don't have a handle on this yet, I skip for now"""
     pass
+
+
+def test_UpperConfidenceBound1():
+    """Test the UpperConfidenceBound class"""
+    ucb = UpperConfidenceBound1(nbandits=2, probs=[0.1, 0.9], ntrials=100)
+    ucb.experiment()
+    assert np.argmax([b.p_estimate for b in ucb.bandits]) == 1
+
+
+def test_OptimisticInitialValues():
+    """Test the OptimisticInitialValues class"""
+    oiv = OptimisticInitialValues(initial_mean=5, nbandits=2, probs=[0.1, 0.9], ntrials=100)
+    oiv.experiment()
+    assert np.argmax([b.p_estimate for b in oiv.bandits]) == 1
