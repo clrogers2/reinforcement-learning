@@ -356,6 +356,12 @@ class EpsilonGreedy(MultiArmBandit):
 
         Args:
             eps (float, optional): Probabiliy of randomly choosing between all bandits. Defaults to 0.1.
+            nbandits (int): Total number of bandits (arms) to use in the simulation
+            probs (list | None): The theoretical probability distribution of each bandit
+            ntrials (int): Total number of simulated steps to run
+            dist (Callable, optional): The probability distribution to use when determining rewards. 
+                Defaults to np.random.random.
+            seed (int, optional): Set the random seed for reproduceability. Defaults to 123.
         """
         super().__init__(*args, **kwargs)
         self.eps = eps
@@ -439,10 +445,25 @@ class OptimisticInitialValues(MultiArmBandit):
 
 
 class UpperConfidenceBound1(MultiArmBandit):
-    """Multi-arm Bandit with the Upper Confidence Bound 1 algorithm. Based on Hoffdinger's """
+    """Multi-arm Bandit with the Upper Confidence Bound 1 algorithm."""
 
     def __init__(self, *args, **kwargs):
+        """
+        The Upper Confidence Bound (UCB) algorithm is a reinforcement learning approach for the multi-armed bandit 
+        problem that balances exploration and exploitation. It calculates the upper confidence bound for each arm using
+        the formula: UCB_i = Q_i/n_i + c * sqrt(ln(N)/n_i), where Q_i/n_i is the average reward, N is the total number 
+        of pulls, n_i is the number of pulls for arm i, c is a constant controlling exploration, and sqrt(ln(N)/n_i) 
+        represents uncertainty. The algorithm selects the arm with the highest UCB value to maximize the 
+        cumulative reward.
 
+        Args:
+            nbandits (int): Total number of bandits (arms) to use in the simulation
+            probs (list | None): The theoretical probability distribution of each bandit
+            ntrials (int): Total number of simulated steps to run
+            dist (Callable, optional): The probability distribution to use when determining rewards. 
+                Defaults to np.random.random.
+            seed (int, optional): Set the random seed for reproduceability. Defaults to 123.
+        """
         super().__init__(*args, **kwargs)
         # Initialize the bandits by pulling each bandit once
         self.total_trials = 0.
